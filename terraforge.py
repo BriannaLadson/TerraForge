@@ -4,7 +4,7 @@ from PIL import Image
 import os
 
 class TerraForge:
-	def __init__(self, noise_types=None, biomes=None, map_size=100, image_size=None):
+	def __init__(self, noise_types=None, biomes=None, map_size=300, image_size=None):
 		#Noise Types
 		self.noise_types = {
 			"elevation": {
@@ -90,8 +90,8 @@ class TerraForge:
 					
 					noise_value = noise_value / 2 + .5 # Normalize
 					
-					#Use Radial Falloff
-					if falloff and falloff.get("type") == "radial":
+					#Use Falloff
+					if falloff:
 						falloff_type = falloff.get("type")
 						strength = falloff.get("strength", 0)
 						
@@ -101,7 +101,7 @@ class TerraForge:
 					#Normalize between 0-1
 					noise_map[y, x] = min(1, max(0, noise_value))
 					
-		self.noise_maps[noise_type] = noise_map
+			self.noise_maps[noise_type] = noise_map
 		
 	def apply_radial_falloff(self, x, y, noise_value, width, height, strength):
 		if strength <= 0:
