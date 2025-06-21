@@ -4,7 +4,7 @@ from PIL import Image
 import os
 
 class TerraForge:
-	def __init__(self, noise_types=None, biomes=None, map_size=100, image_size=None):
+	def __init__(self, noise_types=None, biomes=None, map_size=300, image_size=None):
 		#Noise Types
 		self.noise_types = {
 			"elevation": {
@@ -14,6 +14,10 @@ class TerraForge:
 				"lacunarity": 2,
 				"min_color": "#000000",
 				"max_color": "#FFFFFF",
+				"falloff": {
+					"type": "radial",
+					"strength": 0,
+				},
 			}
 		}
 		
@@ -59,8 +63,15 @@ class TerraForge:
 	def generate_noise(self):
 		self.noise_maps = {}
 		
+		width = height = self.map_size
+		center_x = self.map_size / 2
+		center_y = self.map_size / 2
+		max_distance = np.sqrt(center_x**2 + center_y**2)
+		
 		for noise_type, settings in self.noise_types.items():
 			noise_map = np.zeros((self.map_size, self.map_size))
+			
+			falloff = settings.get("falloff", None)
 			
 			for y in range(self.map_size):
 				for x in range(self.map_size):
@@ -77,13 +88,36 @@ class TerraForge:
 						base=settings["seed"],
 					)
 					
-					noise_value = noise_value / 2 + .5
+					noise_value = noise_value / 2 + .5 # Normalize
+					
+					#Use Radial Falloff
+					if falloff and falloff.get("type") == "radial":
+						falloff_type = falloff.get("type")
+						strength = falloff.get("strength", 0)
+						
+						if falloff_type == "radial":
+							noise_value = self.apply_radial_falloff(x, y, noise_value, width, height, strength)
 					
 					#Normalize between 0-1
-					
 					noise_map[y, x] = min(1, max(0, noise_value))
 					
 		self.noise_maps[noise_type] = noise_map
+		
+	def apply_radial_falloff(self, x, y, noise_value, width, height, strength):
+		if strength <= 0:
+			return noise_value
+			
+		center_x, center_y = width // 2, height // 2
+		max_distance = np.sqrt(center_x ** 2 + center_y ** 2)
+		
+		dx = x - center_x
+		dy = y - center_y
+		distance = np.sqrt(dx ** 2 + dy ** 2)
+		
+		radial = 1 - (distance / max_distance)
+		radial = max(0, min(1, radial))
+		
+		return noise_value * ((1 - strength) + strength * radial)
 		
 	def assign_biomes(self):
 		self.biome_map = np.empty((self.map_size, self.map_size), dtype=object)
