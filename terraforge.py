@@ -4,7 +4,7 @@ from PIL import Image
 import os
 
 class TerraForge:
-	def __init__(self, noise_types=None, biomes=None, map_size=300, image_size=None):
+	def __init__(self, noise_types=None, biomes=None, map_size=100, image_size=None):
 		#Noise Types
 		self.noise_types = {
 			"elevation": {
