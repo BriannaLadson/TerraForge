@@ -4,25 +4,33 @@ from PIL import Image
 import os
 
 class TerraForge:
-	def __init__(self, noise_types=None, biomes=None, map_size=300, image_size=None):
+	def __init__(
+		self, 
+		noise_types=None, 
+		biomes=None, 
+		map_size=300, 
+		image_size=None,
+	):
 		#Noise Types
-		self.noise_types = {
-			"elevation": {
-				"seed": 0,
-				"octaves": 10,
-				"persistence": .5,
-				"lacunarity": 2,
-				"min_color": "#000000",
-				"max_color": "#FFFFFF",
-				"falloff": {
-					"type": "radial",
-					"strength": 0,
-				},
+		if noise_types is not None:
+			self.noise_types = noise_types
+			
+		else:
+			self.noise_types = {
+				"elevation": {
+					"seed": 0,
+					"octaves": 10,
+					"persistence": .5,
+					"lacunarity": 2,
+					"min_color": "#000000",
+					"max_color": "#FFFFFF",
+					"falloff": {
+						"type": "radial",
+						"strength": 0,
+					},
+					"zoom": 1,
+				}
 			}
-		}
-		
-		if noise_types:
-			self.noise_types.update(noise_types)
 			
 		#Biomes
 		self.biomes = [
@@ -73,10 +81,12 @@ class TerraForge:
 			
 			falloff = settings.get("falloff", None)
 			
+			zoom = settings.get("zoom", 1)
+			
 			for y in range(self.map_size):
 				for x in range(self.map_size):
-					nx = (x / self.map_size - .5)
-					ny = (y / self.map_size - .5)
+					nx = (x / self.map_size - .5) / zoom
+					ny = (y / self.map_size - .5) / zoom
 					
 					#Can also use noise.pnoise2 for Perlin
 					noise_value = noise.snoise2(
