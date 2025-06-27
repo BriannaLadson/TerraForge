@@ -202,3 +202,12 @@ class TerraForge:
 				img.putpixel((x, y), rgb_color)
 				
 		img.save(f"{output_dir}/biome_map.png")
+		
+	def tile_color(self, x:int, y:int, default="#000000"):
+		if self.biome_map is None:
+			raise RuntimeError("assign_biomes() has not been run")
+		
+		x %= self.map_size
+		y %= self.map_size
+			
+		return self.biome_map[y,x]
