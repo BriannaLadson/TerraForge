@@ -1,5 +1,10 @@
 # 🌍 TerraForge
-A customizable Python tool for generating biome maps using noise-based elevation and image export.
+A customizable Python tool for generating maps for games and simulations.
+
+Features:
+* 🗺️ Biome Maps – Generate overworld maps using customizable noise-based elevation
+* 🏰 Dungeon Maps – Procedurally generate multi-level dungeons with rooms, corridors, and stairs
+* 🖼️ Image Export – Export biome maps as images (PNG format)
 
 ***
 
@@ -9,6 +14,7 @@ A customizable Python tool for generating biome maps using noise-based elevation
 * Export elevation and biome maps as .png images
 * Fully customizable noise and biome settings
 * Image size and output directory control
+* Customizable dungeon generator
 
 ***
 
@@ -19,12 +25,21 @@ A customizable Python tool for generating biome maps using noise-based elevation
 
 ***
 
-## 🚀 Usage
+## 🚀 Usage - TerraForge (Biome Maps)
 `from terraforge import TerraForge`
 
 `generator = TerraForge(map_size=300, image_size=(600, 600))`
 
 `generator.generate(output_dir="maps")`
+
+***
+
+## 🚀 Usage - DungeonForge (Dungeons)
+`from dungeonforge import DungeonForge`
+
+`generator = DungeonForge()`
+
+`dungeon_map = generator.generate()`
 
 ***
 ### 🚀 Want More Power? Try TerraForgePro
