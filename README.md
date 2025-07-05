@@ -24,6 +24,13 @@ Features:
 * [pillow](https://pypi.org/project/pillow/)
 
 ***
+## 📦 Installation
+You can install TerraForge using [pip](https://pypi.org/project/terraforge-core/).
+```
+pip install terraforge-core
+```
+
+***
 
 ## 🚀 Usage - TerraForge (Biome Maps)
 `from terraforge import TerraForge`
