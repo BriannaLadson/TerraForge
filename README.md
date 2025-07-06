@@ -62,3 +62,7 @@ pip install terraforge-core
   - Archipelago (Multiple Island Centers)
 
 💡 You can technically add moisture and temperature in the free version, but TerraForgePro handles it out of the box—plus you get new falloff types, better island generation, and future updates.
+
+**[DungeonForgePro](https://gum.co/u/rwq2bbml) adds:**
+- Option PNG export per dungeon level
+- Tile color customization for export
