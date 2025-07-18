@@ -62,8 +62,6 @@ class TerraForge:
 		
 		self.generate_noise()
 		
-		self.assign_biomes()
-		
 		self.export_noise_map_images(output_dir)
 		
 		self.export_biome_map_image(output_dir)
@@ -112,6 +110,8 @@ class TerraForge:
 					noise_map[y, x] = min(1, max(0, noise_value))
 					
 			self.noise_maps[noise_type] = noise_map
+			
+		self.assign_biomes()
 		
 	def apply_radial_falloff(self, x, y, noise_value, width, height, strength):
 		if strength <= 0:
