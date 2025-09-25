@@ -9,7 +9,10 @@ class TerraForge:
 		noise_types=None, 
 		biomes=None, 
 		map_size=300, 
-		image_size=None,
+		image_size=None, 
+		num_islands=1, 
+		island_spread=.3,
+		min_island_spacing=None,
 	):
 		#Noise Types
 		if noise_types is not None:
@@ -28,17 +31,49 @@ class TerraForge:
 						"type": "radial",
 						"strength": 0,
 					},
-					"zoom": 1,
-				}
+					"zoom": .3,
+					"redistribution": 1,
+				},
+				"moisture": {
+					"seed": 0,
+					"octaves": 10,
+					"persistence": .5,
+					"lacunarity": 2,
+					"min_color": "#000000",
+					"max_color": "#0000FF",
+					"falloff": {
+						"type": "radial",
+						"strength": 0,
+					},
+					"zoom": .3,
+					"redistribution": 1,
+				},
+				"temperature": {
+					"seed": 0,
+					"octaves": 10,
+					"persistence": .5,
+					"lacunarity": 2,
+					"min_color": "#000000",
+					"max_color": "#FF0000",
+					"falloff": {
+						"type": "radial",
+						"strength": 0,
+					},
+					"zoom": .3,
+					"redistribution": 1,
+				},
 			}
 			
 		#Biomes
 		self.biomes = [
 			{"color": "#1E3A8A", "rules": {"elevation":(0,.3)},}, #Ocean
 			{"color": "#F4A261", "rules": {"elevation": (.3, .4)}}, #Beach
-			{"color": "#3E7C3C", "rules": {"elevation": (.4, .6)}}, #Lowlands
-			{"color": "#264653", "rules": {"elevation": (.6, .8)}}, #Highlands
-			{"color": "#707070", "rules": {"elevation": (.8, 1)}}, #Mountains
+			{"color": "#3E7C3C", "rules": {"elevation": (.4, .6), "moisture": (.5,1)}}, #Forest
+			{"color": "#A7C957", "rules": {"elevation": (.4, .6), "moisture":(0, .5)}}, #Plains
+			{"color": "#DDA15E", "rules": {"elevation": (.6, .8), "moisture":(0, .5)}}, #Dry Highlands
+			{"color": "#264653", "rules": {"elevation": (.6, .8), "moisture":(.5, 1)}}, #Wet Highlands
+			{"color": "#FFFFFF", "rules": {"elevation": (.8, 1), "temperature":(0,.4)}}, #Snowy Mountains
+			{"color": "#707070", "rules": {"elevation": (.8, 1), "temperature":(.4,1)}}, #Rocky Mountains
 		]
 		
 		if not biomes == None:
@@ -56,6 +91,13 @@ class TerraForge:
 			
 		else:
 			self.image_size = image_size
+			
+		#Island Settings
+		self.num_islands = num_islands
+		
+		self.island_spread = island_spread
+		
+		self.min_island_spacing = (min_island_spacing if min_island_spacing is not None else int(self.map_size * .15))
 		
 	def generate(self, output_dir="."):
 		os.makedirs(output_dir, exist_ok=True)
@@ -69,6 +111,8 @@ class TerraForge:
 	def generate_noise(self):
 		self.noise_maps = {}
 		
+		self.island_centers = self.generate_island_centers(count=self.num_islands, spacing=self.min_island_spacing)
+		
 		width = height = self.map_size
 		center_x = self.map_size / 2
 		center_y = self.map_size / 2
@@ -80,6 +124,8 @@ class TerraForge:
 			falloff = settings.get("falloff", None)
 			
 			zoom = settings.get("zoom", 1)
+			
+			redistribution = settings.get("redistribution", 1)
 			
 			for y in range(self.map_size):
 				for x in range(self.map_size):
@@ -98,20 +144,30 @@ class TerraForge:
 					
 					noise_value = noise_value / 2 + .5 # Normalize
 					
-					#Use Falloff
+					#Use Radial Falloff
 					if falloff:
 						falloff_type = falloff.get("type")
 						strength = falloff.get("strength", 0)
 						
 						if falloff_type == "radial":
-							noise_value = self.apply_radial_falloff(x, y, noise_value, width, height, strength)
+							if self.num_islands > 1:
+								noise_value = self.apply_multi_radial_falloff(x, y, noise_value, self.island_centers, strength)
+							
+							else:
+								noise_value = self.apply_radial_falloff(x, y, noise_value, width, height, strength)
+					
+						elif falloff_type == "edge":
+							noise_value = self.apply_edge_falloff(x, y, noise_value, width, height, strength)
+					
+					noise_value = noise_value ** redistribution
 					
 					#Normalize between 0-1
 					noise_map[y, x] = min(1, max(0, noise_value))
 					
 			self.noise_maps[noise_type] = noise_map
 			
-		self.assign_biomes()
+			#Assign Biomes
+			self.assign_biomes()
 		
 	def apply_radial_falloff(self, x, y, noise_value, width, height, strength):
 		if strength <= 0:
@@ -128,6 +184,55 @@ class TerraForge:
 		radial = max(0, min(1, radial))
 		
 		return noise_value * ((1 - strength) + strength * radial)
+		
+	def apply_edge_falloff(self, x, y, noise_value, width, height, strength):
+		if strength <= 0:
+			return noise_value
+			
+		#Distance to nearest edge
+		left = x
+		right = width - x
+		top = y
+		bottom = height - y
+		distance = min(left, right, top, bottom)
+		
+		max_distance = min(width, height) / 2 # Normalize based on half size
+		edge_falloff = distance / max_distance
+		edge_falloff = max(0, min(1, edge_falloff))
+		
+		return noise_value * ((1 - strength) + strength * edge_falloff)
+		
+	def apply_multi_radial_falloff(self, x, y, noise_value, centers, strength):
+		if strength <= 0:
+			return noise_value
+			
+		#Distance to nearest center
+		closest = min(np.hypot(x - cx, y - cy) for cx, cy in centers)
+		
+		#Max possible distance is from one corner to the opposite corner
+		max_dist = self.map_size * self.island_spread
+		falloff = 1 - (closest / max_dist) # 1 at centre -> 0 at farthest edge
+		falloff = max(0, min(1, falloff)) # clamp
+		
+		return noise_value * ((1 - strength) + strength * falloff)
+		
+	def generate_island_centers(self, count, spacing):
+		centers = []
+		attempts = 0
+		max_attempts = count * 20
+		
+		while len(centers) < count and attempts < max_attempts:
+			x = np.random.randint(0, self.map_size)
+			y = np.random.randint(0, self.map_size)
+			
+			too_close = any(np.hypot(x - cx, y - cy) < spacing for cx, cy in centers)
+			
+			if not too_close:
+				centers.append((x, y))
+				
+			attempts += 1
+			
+		return centers
 		
 	def assign_biomes(self):
 		self.biome_map = np.empty((self.map_size, self.map_size), dtype=object)
@@ -211,3 +316,4 @@ class TerraForge:
 		y %= self.map_size
 			
 		return self.biome_map[y,x]
+		
