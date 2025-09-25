@@ -132,7 +132,7 @@ biomes = [
 	rocky_mountain,
 ]
 
-generator = TerraForgePro(
+generator = TerraForge(
 	noise_types=noise_types,
 	biomes = biomes,
 	map_size = 300,
