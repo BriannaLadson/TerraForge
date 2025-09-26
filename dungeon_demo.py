@@ -39,10 +39,10 @@ else:
 		getch = _fallback_getch
 
 generator = DungeonForge(
-	level_size=random.randint(20, 30), 
-	max_rooms=random.randint(5, 10), 
-	z_levels=random.randint(3, 10), 
-	seed=random.randint(0, 100))
+	level_size=25,
+	max_rooms=10, 
+	z_levels=5, 
+	seed=None)
 dungeon = generator.generate()
 level_h, level_w = dungeon[0].shape
 

@@ -1,5 +1,7 @@
 import random
 import numpy as np
+from PIL import Image, ImageDraw
+import os
 
 class DungeonForge:
 	FLOOR = 0
@@ -13,20 +15,34 @@ class DungeonForge:
 		room_size = (3, 6),
 		max_rooms = 10,
 		max_failure = 10,
-		z_levels = 1,
+		z_levels = 3,
 		seed = None,
+		image_size = None,
 	):
 	
 		self.level_size = level_size
+		
+		
 		self.min_room_size = room_size[0]
 		self.max_room_size = room_size[1]
 		self.max_rooms = max_rooms
-		self.max_failure = max_failure
-		self.z_levels = z_levels
-		self.rng = random.Random(seed)
-		
 		self.rooms = []
 		
+		self.max_failure = max_failure
+		
+		self.z_levels = z_levels
+		
+		self.rng = random.Random(seed)
+		
+		if image_size is None:
+			self.image_size = (self.level_size * 16, self.level_size * 16)
+			
+		elif isinstance(image_size, int):
+			self.image_size = (image_size, image_size)
+			
+		else:
+			self.image_size = image_size
+			
 	def generate(self):
 		self.dungeon_map = [self.generate_level() for _ in range(self.z_levels)]
 		
@@ -172,4 +188,54 @@ class DungeonForge:
 								if level[py, px] == self.WALL:
 									level[py, px] = FLOOR
 						return 
+						
+	def export_dungeon_map_images(self, output_dir=".", levels=None, tile_colors=None):
+		if not hasattr(self, "dungeon_map"):
+			raise ValueError("Dungeon map has not been generated yet. Call generate() first.")
+			
+		if levels is None or levels == "all":
+			level_indices = list(range(self.z_levels))
+			
+		elif isinstance(levels, int):
+			level_indices = [levels]
+			
+		else:
+			level_indices = list(levels)
+			
+		default_tile_colors = {
+			self.FLOOR: (255, 255, 255),
+			self.WALL: (0, 0, 0),
+			self.UP: (0, 255, 0),
+			self.DOWN: (255, 0, 0),
+		}
 		
+		if tile_colors is None:
+			tile_colors = default_tile_colors
+			
+		else:
+			for key, val in default_tile_colors.items():
+				tile_colors.setdefault(key, val)
+		
+		for i in level_indices:
+			if i < 0 or i >= len(self.dungeon_map):
+				continue
+				
+			level = self.dungeon_map[i]
+			img = Image.new("RGB", self.image_size, "white")
+			draw = ImageDraw.Draw(img)
+			
+			cell_w = self.image_size[0] / self.level_size
+			cell_h = self.image_size[1] / self.level_size
+			
+			for y in range(self.level_size):
+				for x in range(self.level_size):
+					color = tile_colors.get(level[y, x], (128, 128, 128))
+					
+					x0 = int(x * cell_w)
+					y0 = int(y * cell_h)
+					x1 = int((x + 1) * cell_w)
+					y1 = int((y + 1) * cell_h)
+					
+					draw.rectangle([x0, y0, x1, y1], fill=color)
+					
+			img.save(os.path.join(output_dir, f"dungeon_level_{i}.png"))
