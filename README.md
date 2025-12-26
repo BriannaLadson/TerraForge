@@ -106,3 +106,5 @@ Edit the values in terraforgepro.py or the demo to control:
 - Tile symbols and export colors
 - Specify which levels to export (levels=[0, 2])
 ***
+## Related Libraries
+* [CQCalendar](https://github.com/BriannaLadson/CQCalendar): A lightweight, tick-based time/calendar/lunar cycle system for Python games and simulations.
