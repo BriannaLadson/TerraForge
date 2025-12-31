@@ -107,7 +107,12 @@ Edit the values in terraforgepro.py or the demo to control:
 - Specify which levels to export (levels=[0, 2])
 ***
 ## Related Tools
-* [TerraForge Studio](https://github.com/BriannaLadson/TerraForge/releases/tag/v0.1.0): A GUI tool built on top of the TerraForge library that allows you to quickly generate multi-level dungeons for games, prototypes, and tabletop use.
+### [TerraForge Studio](https://github.com/BriannaLadson/TerraForge/releases/tag/v0.1.0)
+<img width="1366" height="768" alt="Screenshot (583)" src="https://github.com/user-attachments/assets/77317d68-3519-4ec8-85af-8072338c43bb" />
+
+**A GUI tool built on top of the TerraForge library that allows you to quickly generate multi-level dungeons for games, prototypes, and tabletop use.**
+
 ***
+
 ## Related Libraries
 * [CQCalendar](https://github.com/BriannaLadson/CQCalendar): A lightweight, tick-based time/calendar/lunar cycle system for Python games and simulations.
