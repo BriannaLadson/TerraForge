@@ -18,15 +18,22 @@ class DungeonForge:
 		z_levels = 3,
 		seed = None,
 		image_size = None,
-	):
-	
-		self.level_size = level_size
-		
+	):	
 		
 		self.min_room_size = room_size[0]
 		self.max_room_size = room_size[1]
 		self.max_rooms = max_rooms
 		self.rooms = []
+		
+		if level_size is None or level_size <=0:
+			level_size = 25
+		
+		min_level_size = self.max_room_size + 2
+		
+		if level_size < min_level_size:
+			level_size = min_level_size
+			
+		self.level_size = int(level_size)
 		
 		self.max_failure = max_failure
 		
@@ -38,10 +45,20 @@ class DungeonForge:
 			self.image_size = (self.level_size * 16, self.level_size * 16)
 			
 		elif isinstance(image_size, int):
-			self.image_size = (image_size, image_size)
+			if image_size <= 0:
+				self.image_size = (self.level_size * 16, self.level_size * 16)
+			
+			else:
+				self.image_size = (image_size, image_size)
 			
 		else:
-			self.image_size = image_size
+			w, h = image_size
+			
+			if w <= 0 or h <= 0:
+				self.image_size = (self.level_size * 16, self.level_size * 16)
+				
+			else:
+				self.image_size = (int(w), int(h))
 			
 	def generate(self):
 		self.dungeon_map = [self.generate_level() for _ in range(self.z_levels)]
@@ -186,7 +203,7 @@ class DungeonForge:
 						for px, py in path:
 							if 0 <= px < self.level_size and 0 <= py < self.level_size:
 								if level[py, px] == self.WALL:
-									level[py, px] = FLOOR
+									level[py, px] = self.FLOOR
 						return 
 						
 	def export_dungeon_map_images(self, output_dir=".", levels=None, tile_colors=None):
