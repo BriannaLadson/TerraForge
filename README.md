@@ -116,3 +116,4 @@ Edit the values in terraforgepro.py or the demo to control:
 
 ## Related Libraries
 * [CQCalendar](https://github.com/BriannaLadson/CQCalendar): A lightweight, tick-based time/calendar/lunar cycle system for Python games and simulations.
+* [MoonTex](https://github.com/BriannaLadson/MoonTex): A procedural moon texture generator for Python that creates stylized, noise-based moon phase images.
