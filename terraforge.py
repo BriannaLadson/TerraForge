@@ -389,9 +389,16 @@ class TerraForge:
 			img = data["image_size"]
 			if not (isinstance(img, (list, tuple)) and len(img) == 2):
 				raise ValueError("'image_size' must be [width, height].")
-
-
-if __name__ == "__main__":
-	tf = TerraForge(map_size=500)
 	
-	tf.export_preset("preset.json")
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

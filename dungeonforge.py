@@ -273,8 +273,54 @@ class DungeonForge:
 			img = data["image_size"]
 			if not (isinstance(img, (list, tuple)) and len(img) == 2):
 				raise ValueError("'image_size' must be [width, height].")
-
 				
-if __name__ == "__main__":
-	df = DungeonForge(seed=10)
-	df.export_preset("dungeon_preset.json")
+	def export_dungeon_map_images(self, output_dir=".", levels=None, tile_colors=None):
+		if not hasattr(self, "dungeon_map"):
+			raise ValueError("Dungeon map has not been generated yet. Call generate() first.")
+			
+		if levels is None or levels == "all":
+			level_indices = list(range(self.z_levels))
+			
+		elif isinstance(levels, int):
+			level_indices = [levels]
+			
+		else:
+			level_indices = list(levels)
+			
+		default_tile_colors = {
+			self.FLOOR: (255, 255, 255),
+			self.WALL: (0, 0, 0),
+			self.UP: (0, 255, 0),
+			self.DOWN: (255, 0, 0),
+		}
+		
+		if tile_colors is None:
+			tile_colors = default_tile_colors
+			
+		else:
+			for key, val in default_tile_colors.items():
+				tile_colors.setdefault(key, val)
+		
+		for i in level_indices:
+			if i < 0 or i >= len(self.dungeon_map):
+				continue
+				
+			level = self.dungeon_map[i]
+			img = Image.new("RGB", self.image_size, "white")
+			draw = ImageDraw.Draw(img)
+			
+			cell_w = self.image_size[0] / self.level_size
+			cell_h = self.image_size[1] / self.level_size
+			
+			for y in range(self.level_size):
+				for x in range(self.level_size):
+					color = tile_colors.get(level[y, x], (128, 128, 128))
+					
+					x0 = int(x * cell_w)
+					y0 = int(y * cell_h)
+					x1 = int((x + 1) * cell_w)
+					y1 = int((y + 1) * cell_h)
+					
+					draw.rectangle([x0, y0, x1, y1], fill=color)
+					
+			img.save(os.path.join(output_dir, f"dungeon_level_{i}.png"))

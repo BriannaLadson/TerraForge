@@ -1,4 +1,4 @@
-# TerraForge v1.2.0 🗺️
+# TerraForge v1.2.1 🗺️
 **Procedural Biome/Island & Dungeon Map Generator using Simplex Noise**
 
 **TerraForge** is a versatile Python toolset for procedural map generation. 
