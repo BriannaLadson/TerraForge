@@ -6,3 +6,5 @@ __all__ = [
 	"TerraForge",
 	"DungeonForge",
 ]
+
+__version__ = "1.2.0"

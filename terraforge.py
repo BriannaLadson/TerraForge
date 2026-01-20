@@ -2,6 +2,8 @@ import noise
 import numpy as np
 from PIL import Image
 import os
+import json
+from copy import deepcopy
 
 class TerraForge:
 	def __init__(
@@ -166,8 +168,8 @@ class TerraForge:
 					
 			self.noise_maps[noise_type] = noise_map
 			
-			#Assign Biomes
-			self.assign_biomes()
+		#Assign Biomes
+		self.assign_biomes()
 		
 	def apply_radial_falloff(self, x, y, noise_value, width, height, strength):
 		if strength <= 0:
@@ -309,11 +311,87 @@ class TerraForge:
 		img.save(f"{output_dir}/biome_map.png")
 		
 	def tile_color(self, x:int, y:int, default="#000000"):
-		if self.biome_map is None:
+		if not hasattr(self, "biome_map") or self.biome_map is None:
 			raise RuntimeError("assign_biomes() has not been run")
 		
 		x %= self.map_size
 		y %= self.map_size
 			
 		return self.biome_map[y,x]
+
 		
+	def export_preset(self, path: str):
+		"""Save this TerraForge configuration as a JSON preset."""
+		preset = {
+			"version": "1.0",
+			"map_size": int(self.map_size),
+			"image_size": [int(self.image_size[0]), int(self.image_size[1])],
+			"num_islands": int(self.num_islands),
+			"island_spread": float(self.island_spread),
+			"min_island_spacing": int(self.min_island_spacing),
+			"noise_types": self.noise_types,
+			"biomes": self.biomes,
+		}
+		
+		os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+		with open(path, "w", encoding="utf-8") as f:
+			json.dump(preset, f, indent=4)
+
+
+	def import_preset(self, path: str):
+		"""Load a TerraForge configuration from a JSON preset onto this instance."""
+		with open(path, "r", encoding="utf-8") as f:
+			data = json.load(f)
+		
+		self._validate_preset(data)
+		
+		# Apply values (fallback to existing if missing)
+		self.map_size = int(data.get("map_size", self.map_size))
+		
+		image_size = data.get("image_size", [self.image_size[0], self.image_size[1]])
+		if isinstance(image_size, list):
+			self.image_size = (int(image_size[0]), int(image_size[1]))
+		
+		self.num_islands = int(data.get("num_islands", self.num_islands))
+		self.island_spread = float(data.get("island_spread", self.island_spread))
+		
+		if "min_island_spacing" in data:
+			self.min_island_spacing = int(data["min_island_spacing"])
+		
+		if "noise_types" in data:
+			self.noise_types = data["noise_types"]
+		
+		if "biomes" in data:
+			self.biomes = data["biomes"]
+		
+		if hasattr(self, "noise_maps"):
+			delattr(self, "noise_maps")
+		if hasattr(self, "biome_map"):
+			delattr(self, "biome_map")
+		if hasattr(self, "island_centers"):
+			delattr(self, "island_centers")
+
+
+	def _validate_preset(self, data: dict):
+		if not isinstance(data, dict):
+			raise ValueError("Preset must be a JSON object.")
+		
+		if "version" in data and not isinstance(data["version"], str):
+			raise ValueError("'version' must be a string.")
+		
+		if "noise_types" in data and not isinstance(data["noise_types"], dict):
+			raise ValueError("'noise_types' must be a dict.")
+		
+		if "biomes" in data and not isinstance(data["biomes"], list):
+			raise ValueError("'biomes' must be a list.")
+		
+		if "image_size" in data:
+			img = data["image_size"]
+			if not (isinstance(img, (list, tuple)) and len(img) == 2):
+				raise ValueError("'image_size' must be [width, height].")
+
+
+if __name__ == "__main__":
+	tf = TerraForge(map_size=500)
+	
+	tf.export_preset("preset.json")

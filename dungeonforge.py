@@ -2,6 +2,8 @@ import random
 import numpy as np
 from PIL import Image, ImageDraw
 import os
+import json
+from copy import deepcopy
 
 class DungeonForge:
 	FLOOR = 0
@@ -40,6 +42,8 @@ class DungeonForge:
 		self.z_levels = z_levels
 		
 		self.rng = random.Random(seed)
+		
+		self.seed = seed
 		
 		if image_size is None:
 			self.image_size = (self.level_size * 16, self.level_size * 16)
@@ -206,53 +210,71 @@ class DungeonForge:
 									level[py, px] = self.FLOOR
 						return 
 						
-	def export_dungeon_map_images(self, output_dir=".", levels=None, tile_colors=None):
-		if not hasattr(self, "dungeon_map"):
-			raise ValueError("Dungeon map has not been generated yet. Call generate() first.")
-			
-		if levels is None or levels == "all":
-			level_indices = list(range(self.z_levels))
-			
-		elif isinstance(levels, int):
-			level_indices = [levels]
-			
-		else:
-			level_indices = list(levels)
-			
-		default_tile_colors = {
-			self.FLOOR: (255, 255, 255),
-			self.WALL: (0, 0, 0),
-			self.UP: (0, 255, 0),
-			self.DOWN: (255, 0, 0),
+	def export_preset(self, path: str):
+		"""Save this DungeonForge configuration as a JSON preset."""
+		preset = {
+			"version": "1.0",
+			"level_size": int(self.level_size),
+			"room_size": [int(self.min_room_size), int(self.max_room_size)],
+			"max_rooms": int(self.max_rooms),
+			"max_failure": int(self.max_failure),
+			"z_levels": int(self.z_levels),
+			"seed": self.seed,
+			"image_size": [int(self.image_size[0]), int(self.image_size[1])],
 		}
 		
-		if tile_colors is None:
-			tile_colors = default_tile_colors
-			
-		else:
-			for key, val in default_tile_colors.items():
-				tile_colors.setdefault(key, val)
+		os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+		with open(path, "w", encoding="utf-8") as f:
+			json.dump(preset, f, indent=4)
+
+
+	def import_preset(self, path: str):
+		"""Load a DungeonForge configuration from a JSON preset onto this instance."""
+		with open(path, "r", encoding="utf-8") as f:
+			data = json.load(f)
 		
-		for i in level_indices:
-			if i < 0 or i >= len(self.dungeon_map):
-				continue
+		self._validate_preset(data)
+		
+		self.level_size = int(data.get("level_size", self.level_size))
+		
+		room_size = data.get("room_size", [self.min_room_size, self.max_room_size])
+		self.min_room_size = int(room_size[0])
+		self.max_room_size = int(room_size[1])
+		
+		self.max_rooms = int(data.get("max_rooms", self.max_rooms))
+		self.max_failure = int(data.get("max_failure", self.max_failure))
+		self.z_levels = int(data.get("z_levels", self.z_levels))
+		
+		self.seed = data.get("seed", self.seed)
+		self.rng = random.Random(self.seed)
+		
+		img = data.get("image_size", [self.image_size[0], self.image_size[1]])
+		self.image_size = (int(img[0]), int(img[1]))
+		
+		# Clear generated state
+		self.rooms = []
+		if hasattr(self, "dungeon_map"):
+			delattr(self, "dungeon_map")
+
+
+	def _validate_preset(self, data: dict):
+		if not isinstance(data, dict):
+			raise ValueError("Preset must be a JSON object.")
+		
+		if "version" in data and not isinstance(data["version"], str):
+			raise ValueError("'version' must be a string.")
+		
+		if "room_size" in data:
+			rs = data["room_size"]
+			if not (isinstance(rs, (list, tuple)) and len(rs) == 2):
+				raise ValueError("'room_size' must be [min_room_size, max_room_size].")
+		
+		if "image_size" in data:
+			img = data["image_size"]
+			if not (isinstance(img, (list, tuple)) and len(img) == 2):
+				raise ValueError("'image_size' must be [width, height].")
+
 				
-			level = self.dungeon_map[i]
-			img = Image.new("RGB", self.image_size, "white")
-			draw = ImageDraw.Draw(img)
-			
-			cell_w = self.image_size[0] / self.level_size
-			cell_h = self.image_size[1] / self.level_size
-			
-			for y in range(self.level_size):
-				for x in range(self.level_size):
-					color = tile_colors.get(level[y, x], (128, 128, 128))
-					
-					x0 = int(x * cell_w)
-					y0 = int(y * cell_h)
-					x1 = int((x + 1) * cell_w)
-					y1 = int((y + 1) * cell_h)
-					
-					draw.rectangle([x0, y0, x1, y1], fill=color)
-					
-			img.save(os.path.join(output_dir, f"dungeon_level_{i}.png"))
+if __name__ == "__main__":
+	df = DungeonForge(seed=10)
+	df.export_preset("dungeon_preset.json")

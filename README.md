@@ -1,4 +1,4 @@
-# TerraForge v1.1.1 🗺️
+# TerraForge v1.2.0 🗺️
 **Procedural Biome/Island & Dungeon Map Generator using Simplex Noise**
 
 **TerraForge** is a versatile Python toolset for procedural map generation. 
@@ -15,6 +15,7 @@ It includes tools for creating noise-based biome maps and multi-level dungeon la
 - Parameters for island spread, spacing, scale, and strength
 - Basic biome color mapping based on environmental conditions
 - Outputs high-resolution PNG images
+- JSON preset import/export for reuse in games
 
 ## 🏰 Dungeon Generator (DungeonForge)
 - Multi-level dungeon generation (3D stack of floors)
@@ -23,7 +24,7 @@ It includes tools for creating noise-based biome maps and multi-level dungeon la
 - Console-based movement demo included
 - Optional PNG export per dungeon level
 - Tile color customization for export
-
+- JSON preset import/export
 
 ***
 
@@ -74,6 +75,14 @@ Generates .pngs for each dungeon level.
 
 `generator.generate(output_dir="maps")`
 
+## 🔁 Preset Workflow
+```
+generator.export_preset("world_preset.json")
+
+generator.import_preset("world_preset.json")
+generator.generate("maps")
+```
+
 ***
 
 ## 🚀 Usage - DungeonForge (Dungeons)
@@ -82,6 +91,14 @@ Generates .pngs for each dungeon level.
 `generator = DungeonForge()`
 
 `dungeon_map = generator.generate()`
+
+## 🔁 Preset Workflow
+```
+generator.export_preset("dungeon_preset.json")
+
+generator.import_preset("dungeon_preset.json")
+generator.generate()
+```
 
 ***
 ## ⚙️ Customization Options
