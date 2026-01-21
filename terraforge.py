@@ -239,28 +239,41 @@ class TerraForge:
 		
 	def assign_biomes(self):
 		self.biome_map = np.empty((self.map_size, self.map_size), dtype=object)
-		
+
+		# Pick a fallback color (use first biome if possible)
+		fallback_color = "#000000"
+		if isinstance(self.biomes, list) and len(self.biomes) > 0:
+			fallback_color = self.biomes[0].get("color", "#000000")
+
 		for y in range(self.map_size):
 			for x in range(self.map_size):
+				assigned = False
+
 				for biome in self.biomes:
 					matches = True
-					
+
 					for noise_type, (min_val, max_val) in biome["rules"].items():
 						value = self.noise_maps.get(noise_type, None)
-						
+
 						if value is None:
 							matches = False
 							break
-							
+
 						cell_value = value[y, x]
-						
+
 						if not (min_val <= cell_value <= max_val):
 							matches = False
 							break
-							
+
 					if matches:
-						self.biome_map[y, x] = biome["color"]
+						self.biome_map[y, x] = biome.get("color", fallback_color)
+						assigned = True
 						break
+
+				# Fallback if nothing matched
+				if not assigned:
+					self.biome_map[y, x] = fallback_color
+
 		
 	def hex_to_rgb(self, hex_color):
 		hex_color = hex_color.lstrip("#")
