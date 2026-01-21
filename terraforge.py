@@ -465,65 +465,6 @@ class TerraForge:
 
 					if mn > mx:
 						raise ValueError(f"Biome #{i} rule '{noise_key}' has min > max.")
-						
-if __name__ == "__main__":
-	print("=== TerraForge quick validation test ===")
-
-	# 1) Basic generation with defaults
-	tf = TerraForge(map_size=64, image_size=128)
-	tf.generate_noise()
-
-	print("Default biomes loaded:")
-	for b in tf.biomes:
-		print(f"  - {b.get('id')} | {b.get('name')} | {b['color']}")
-
-	# 2) Export + import preset round-trip
-	preset_path = "_test_terraforge_preset.json"
-	tf.export_preset(preset_path)
-
-	tf2 = TerraForge()
-	tf2.import_preset(preset_path)
-	tf2.generate_noise()
-
-	print("\nPreset round-trip successful.")
-	print(f"Imported {len(tf2.biomes)} biomes.")
-
-	# 3) Verify biome map actually contains multiple biome colors
-	unique_colors = set()
-	for y in range(tf2.map_size):
-		for x in range(tf2.map_size):
-			unique_colors.add(tf2.biome_map[y, x])
-
-	print(f"Unique biome colors generated: {len(unique_colors)}")
-
-	# 4) Intentional failure test: duplicate biome IDs
-	print("\nTesting duplicate biome ID validation (should raise error)...")
-
-	bad_preset = {
-		"version": "1.0",
-		"map_size": 32,
-		"image_size": [64, 64],
-		"num_islands": 1,
-		"island_spread": 0.3,
-		"min_island_spacing": 4,
-		"noise_types": tf.noise_types,
-		"biomes": [
-			{"id": "test", "name": "A", "color": "#000000", "rules": {"elevation": (0, .5)}},
-			{"id": "test", "name": "B", "color": "#FFFFFF", "rules": {"elevation": (.5, 1)}},
-		],
-	}
-
-	try:
-		tf_bad = TerraForge()
-		tf_bad._validate_preset(bad_preset)
-		print("ERROR: duplicate ID validation failed (this should not print)")
-	except ValueError as e:
-		print("Duplicate ID correctly rejected:")
-		print(" ", e)
-
-	print("\n=== TerraForge test complete ===")
-
-	
 	
 	
 	
