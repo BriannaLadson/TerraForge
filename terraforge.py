@@ -68,15 +68,16 @@ class TerraForge:
 			
 		#Biomes
 		self.biomes = [
-			{"color": "#1E3A8A", "rules": {"elevation":(0,.3)},}, #Ocean
-			{"color": "#F4A261", "rules": {"elevation": (.3, .4)}}, #Beach
-			{"color": "#3E7C3C", "rules": {"elevation": (.4, .6), "moisture": (.5,1)}}, #Forest
-			{"color": "#A7C957", "rules": {"elevation": (.4, .6), "moisture":(0, .5)}}, #Plains
-			{"color": "#DDA15E", "rules": {"elevation": (.6, .8), "moisture":(0, .5)}}, #Dry Highlands
-			{"color": "#264653", "rules": {"elevation": (.6, .8), "moisture":(.5, 1)}}, #Wet Highlands
-			{"color": "#FFFFFF", "rules": {"elevation": (.8, 1), "temperature":(0,.4)}}, #Snowy Mountains
-			{"color": "#707070", "rules": {"elevation": (.8, 1), "temperature":(.4,1)}}, #Rocky Mountains
+			{"id": "ocean", "name": "Ocean", "color": "#1E3A8A", "rules": {"elevation": (0, .3)}},  # Ocean (FIXED)
+			{"id": "beach", "name": "Beach", "color": "#F4A261", "rules": {"elevation": (.3, .4)}},  # Beach
+			{"id": "forest", "name": "Forest", "color": "#3E7C3C", "rules": {"elevation": (.4, .6), "moisture": (.5, 1)}},  # Forest
+			{"id": "plains", "name": "Plains", "color": "#A7C957", "rules": {"elevation": (.4, .6), "moisture": (0, .5)}},  # Plains
+			{"id": "dry_highlands", "name": "Dry Highlands", "color": "#DDA15E", "rules": {"elevation": (.6, .8), "moisture": (0, .5)}},  # Dry Highlands
+			{"id": "wet_highlands", "name": "Wet Highlands", "color": "#264653", "rules": {"elevation": (.6, .8), "moisture": (.5, 1)}},  # Wet Highlands
+			{"id": "snowy_mountains", "name": "Snowy Mountains", "color": "#FFFFFF", "rules": {"elevation": (.8, 1), "temperature": (0, .4)}},  # Snowy Mountains
+			{"id": "rocky_mountains", "name": "Rocky Mountains", "color": "#707070", "rules": {"elevation": (.8, 1), "temperature": (.4, 1)}},  # Rocky Mountains
 		]
+
 		
 		if not biomes == None:
 			self.biomes = biomes
@@ -375,27 +376,140 @@ class TerraForge:
 	def _validate_preset(self, data: dict):
 		if not isinstance(data, dict):
 			raise ValueError("Preset must be a JSON object.")
-		
+
 		if "version" in data and not isinstance(data["version"], str):
 			raise ValueError("'version' must be a string.")
-		
+
+		if "map_size" in data and not isinstance(data["map_size"], (int, float)):
+			raise ValueError("'map_size' must be a number.")
+
+		if "num_islands" in data and not isinstance(data["num_islands"], (int, float)):
+			raise ValueError("'num_islands' must be a number.")
+
+		if "island_spread" in data and not isinstance(data["island_spread"], (int, float)):
+			raise ValueError("'island_spread' must be a number.")
+
+		if "min_island_spacing" in data and not isinstance(data["min_island_spacing"], (int, float)):
+			raise ValueError("'min_island_spacing' must be a number.")
+
 		if "noise_types" in data and not isinstance(data["noise_types"], dict):
 			raise ValueError("'noise_types' must be a dict.")
-		
+
 		if "biomes" in data and not isinstance(data["biomes"], list):
 			raise ValueError("'biomes' must be a list.")
-		
+
 		if "image_size" in data:
 			img = data["image_size"]
 			if not (isinstance(img, (list, tuple)) and len(img) == 2):
 				raise ValueError("'image_size' must be [width, height].")
-	
-	
-	
-	
-	
-	
-	
+			if not isinstance(img[0], (int, float)) or not isinstance(img[1], (int, float)):
+				raise ValueError("'image_size' values must be numbers.")
+
+		# ---- Biome validation (supports optional 'name' and 'id') ----
+		if "biomes" in data:
+			seen_ids = set()
+
+			for i, biome in enumerate(data["biomes"]):
+				if not isinstance(biome, dict):
+					raise ValueError(f"Biome #{i} must be a dict.")
+
+				# Required fields
+				if "color" not in biome:
+					raise ValueError(f"Biome #{i} is missing required field 'color'.")
+				if "rules" not in biome:
+					raise ValueError(f"Biome #{i} is missing required field 'rules'.")
+
+				if not isinstance(biome["color"], str):
+					raise ValueError(f"Biome #{i} field 'color' must be a string.")
+				if not isinstance(biome["rules"], dict):
+					raise ValueError(f"Biome #{i} field 'rules' must be a dict.")
+
+				# Optional fields
+				if "name" in biome and biome["name"] is not None and not isinstance(biome["name"], str):
+					raise ValueError(f"Biome #{i} field 'name' must be a string if provided.")
+
+				if "id" in biome and biome["id"] is not None:
+					if not isinstance(biome["id"], str):
+						raise ValueError(f"Biome #{i} field 'id' must be a string if provided.")
+					biome_id = biome["id"].strip()
+					if not biome_id:
+						raise ValueError(f"Biome #{i} field 'id' cannot be empty.")
+					if biome_id in seen_ids:
+						raise ValueError(f"Duplicate biome id '{biome_id}' found. Biome ids must be unique.")
+					seen_ids.add(biome_id)
+
+				# Rules validation: { noise_type: (min, max) }
+				for noise_key, bounds in biome["rules"].items():
+					if not isinstance(noise_key, str) or not noise_key.strip():
+						raise ValueError(f"Biome #{i} has an invalid noise type key in 'rules'.")
+
+					if not (isinstance(bounds, (list, tuple)) and len(bounds) == 2):
+						raise ValueError(f"Biome #{i} rule '{noise_key}' must be (min, max).")
+
+					mn, mx = bounds
+					if not isinstance(mn, (int, float)) or not isinstance(mx, (int, float)):
+						raise ValueError(f"Biome #{i} rule '{noise_key}' min/max must be numbers.")
+
+					if mn > mx:
+						raise ValueError(f"Biome #{i} rule '{noise_key}' has min > max.")
+						
+if __name__ == "__main__":
+	print("=== TerraForge quick validation test ===")
+
+	# 1) Basic generation with defaults
+	tf = TerraForge(map_size=64, image_size=128)
+	tf.generate_noise()
+
+	print("Default biomes loaded:")
+	for b in tf.biomes:
+		print(f"  - {b.get('id')} | {b.get('name')} | {b['color']}")
+
+	# 2) Export + import preset round-trip
+	preset_path = "_test_terraforge_preset.json"
+	tf.export_preset(preset_path)
+
+	tf2 = TerraForge()
+	tf2.import_preset(preset_path)
+	tf2.generate_noise()
+
+	print("\nPreset round-trip successful.")
+	print(f"Imported {len(tf2.biomes)} biomes.")
+
+	# 3) Verify biome map actually contains multiple biome colors
+	unique_colors = set()
+	for y in range(tf2.map_size):
+		for x in range(tf2.map_size):
+			unique_colors.add(tf2.biome_map[y, x])
+
+	print(f"Unique biome colors generated: {len(unique_colors)}")
+
+	# 4) Intentional failure test: duplicate biome IDs
+	print("\nTesting duplicate biome ID validation (should raise error)...")
+
+	bad_preset = {
+		"version": "1.0",
+		"map_size": 32,
+		"image_size": [64, 64],
+		"num_islands": 1,
+		"island_spread": 0.3,
+		"min_island_spacing": 4,
+		"noise_types": tf.noise_types,
+		"biomes": [
+			{"id": "test", "name": "A", "color": "#000000", "rules": {"elevation": (0, .5)}},
+			{"id": "test", "name": "B", "color": "#FFFFFF", "rules": {"elevation": (.5, 1)}},
+		],
+	}
+
+	try:
+		tf_bad = TerraForge()
+		tf_bad._validate_preset(bad_preset)
+		print("ERROR: duplicate ID validation failed (this should not print)")
+	except ValueError as e:
+		print("Duplicate ID correctly rejected:")
+		print(" ", e)
+
+	print("\n=== TerraForge test complete ===")
+
 	
 	
 	

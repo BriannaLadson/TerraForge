@@ -1,4 +1,4 @@
-# TerraForge v1.2.1 🗺️
+# TerraForge v1.3.0 🗺️
 **Procedural Biome/Island & Dungeon Map Generator using Simplex Noise**
 
 **TerraForge** is a versatile Python toolset for procedural map generation. 
@@ -83,6 +83,32 @@ generator.import_preset("world_preset.json")
 generator.generate("maps")
 ```
 
+## 🧩 Biome Schema (Presets)
+Biomes are stored as a list of objects. Each biome requires:
+- `color` (hex string)
+- `rules` (dict of noise_type -> [min, max])
+
+Optional (recommended for tools like TerraForge Studio):
+- `id` (unique string per biome)
+- `name` (display name)
+
+Example biome:
+```json
+{
+  "id": "forest",
+  "name": "Forest",
+  "color": "#3E7C3C",
+  "rules": {
+    "elevation": [0.4, 0.6],
+    "moisture": [0.5, 1.0]
+  }
+}
+```
+
+Notes:
+* id is optional, but if provided it must be unique within the preset.
+* Rule ranges must satisfy min <= max.
+
 ***
 
 ## 🚀 Usage - DungeonForge (Dungeons)
@@ -104,7 +130,7 @@ generator.generate()
 ## ⚙️ Customization Options
 
 ### Biome Generator
-Edit the values in terraforgepro.py or the demo to control:
+Edit the values in terraforge.py or the demo to control:
 
 - map_size and image_size
 
