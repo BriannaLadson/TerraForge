@@ -332,6 +332,34 @@ class TerraForge:
 		y %= self.map_size
 			
 		return self.biome_map[y,x]
+		
+	def get_biome(self, x: int, y: int):
+		if not hasattr(self, "noise_maps") or self.noise_maps is None:
+			raise RuntimeError("generate_noise() has not been run")
+			
+		x %= self.map_size
+		y %= self.map_size
+		
+		for biome in self.biomes:
+			matches = True
+			
+			for noise_type, (min_val, max_val) in biome["rules"].items():
+				noise_map = self.noise_maps.get(noise_type)
+				
+				if noise_map is None:
+					matches = False
+					break
+					
+				value = noise_map[y, x]
+				
+				if not (min_val <= value <= max_val):
+					matches = False
+					break
+					
+			if matches:
+				return biome
+				
+		return None
 
 		
 	def export_preset(self, path: str):
@@ -465,7 +493,6 @@ class TerraForge:
 
 					if mn > mx:
 						raise ValueError(f"Biome #{i} rule '{noise_key}' has min > max.")
-	
 	
 	
 	
