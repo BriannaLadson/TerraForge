@@ -340,23 +340,10 @@ class TerraForge:
 		x %= self.map_size
 		y %= self.map_size
 		
+		color = self.biome_map[y, x]
+		
 		for biome in self.biomes:
-			matches = True
-			
-			for noise_type, (min_val, max_val) in biome["rules"].items():
-				noise_map = self.noise_maps.get(noise_type)
-				
-				if noise_map is None:
-					matches = False
-					break
-					
-				value = noise_map[y, x]
-				
-				if not (min_val <= value <= max_val):
-					matches = False
-					break
-					
-			if matches:
+			if biome.get("color") == color:
 				return biome
 				
 		return None
@@ -493,7 +480,3 @@ class TerraForge:
 
 					if mn > mx:
 						raise ValueError(f"Biome #{i} rule '{noise_key}' has min > max.")
-	
-	
-	
-	
