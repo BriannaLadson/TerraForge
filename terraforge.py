@@ -3,7 +3,6 @@ import numpy as np
 from PIL import Image
 import os
 import json
-from copy import deepcopy
 
 class TerraForge:
 	def __init__(
@@ -117,9 +116,6 @@ class TerraForge:
 		self.island_centers = self.generate_island_centers(count=self.num_islands, spacing=self.min_island_spacing)
 		
 		width = height = self.map_size
-		center_x = self.map_size / 2
-		center_y = self.map_size / 2
-		max_distance = np.sqrt(center_x**2 + center_y**2)
 		
 		for noise_type, settings in self.noise_types.items():
 			noise_map = np.zeros((self.map_size, self.map_size))
@@ -240,10 +236,10 @@ class TerraForge:
 	def assign_biomes(self):
 		self.biome_map = np.empty((self.map_size, self.map_size), dtype=object)
 
-		# Pick a fallback color (use first biome if possible)
-		fallback_color = "#000000"
+		# Pick a fallback biome (use first biome if possible)
+		fallback_biome = None
 		if isinstance(self.biomes, list) and len(self.biomes) > 0:
-			fallback_color = self.biomes[0].get("color", "#000000")
+			fallback_biome = self.biomes[0]
 
 		for y in range(self.map_size):
 			for x in range(self.map_size):
@@ -266,13 +262,13 @@ class TerraForge:
 							break
 
 					if matches:
-						self.biome_map[y, x] = biome.get("color", fallback_color)
+						self.biome_map[y, x] = biome
 						assigned = True
 						break
 
 				# Fallback if nothing matched
 				if not assigned:
-					self.biome_map[y, x] = fallback_color
+					self.biome_map[y, x] = fallback_biome
 
 		
 	def hex_to_rgb(self, hex_color):
@@ -318,7 +314,9 @@ class TerraForge:
 				source_x = int(x * scale_x)
 				source_y = int(y * scale_y)
 				
-				hex_color = self.biome_map[source_y, source_x]
+				biome = self.biome_map[source_y, source_x]
+				hex_color = biome["color"] if biome is not None else "#000000"
+				
 				rgb_color = self.hex_to_rgb(hex_color)
 				img.putpixel((x, y), rgb_color)
 				
@@ -330,23 +328,22 @@ class TerraForge:
 		
 		x %= self.map_size
 		y %= self.map_size
+		
+		biome = self.biome_map[y, x]
+		
+		if biome is None:
+			return default
 			
-		return self.biome_map[y,x]
+		return biome["color"]
 		
 	def get_biome(self, x: int, y: int):
-		if not hasattr(self, "noise_maps") or self.noise_maps is None:
-			raise RuntimeError("generate_noise() has not been run")
+		if not hasattr(self, "biome_map") or self.biome_map is None:
+			raise RuntimeError("assign_biomes() has not been run")
 			
 		x %= self.map_size
 		y %= self.map_size
 		
-		color = self.biome_map[y, x]
-		
-		for biome in self.biomes:
-			if biome.get("color") == color:
-				return biome
-				
-		return None
+		return self.biome_map[y, x]
 
 		
 	def export_preset(self, path: str):

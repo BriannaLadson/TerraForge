@@ -1,4 +1,4 @@
-# TerraForge v1.3.3 🗺️
+# TerraForge v1.4.0 🗺️
 **Procedural Biome/Island & Dungeon Map Generator using Simplex Noise**
 
 **TerraForge** is a versatile Python toolset for procedural map generation. 
@@ -13,7 +13,7 @@ It includes tools for creating noise-based biome maps and multi-level dungeon la
 - Supports single and clustered multi-island generation
 - Falloff support: Radial, Edge, or None
 - Parameters for island spread, spacing, scale, and strength
-- Basic biome color mapping based on environmental conditions
+- Biome mapping based on environmental conditions (supports both visual colors and logic-driven biome data)
 - Outputs high-resolution PNG images
 - JSON preset import/export for reuse in games
 
@@ -108,6 +108,31 @@ Example biome:
 Notes:
 * id is optional, but if provided it must be unique within the preset.
 * Rule ranges must satisfy min <= max.
+
+***
+## 🧠 Accessing Biome Data
+Each tile now stores full biome data instead of just a color.
+
+```
+biome = generator.get_biome(x, y)
+
+print(biome["id"]) # logic (e.g., "forest", "ocean")
+print(biome["name"]) # display name
+```
+
+To get the visual color of a tile:
+
+```
+color = generator.tile_color(x, y)
+```
+
+***
+
+## ⚠️ Update (v1.4.0)
+* biome_map now stores full biome dictionaries instead of hex color strings
+* Use tile_color(x, y) to retrieve the visual color
+* Use get_biome(x, y) for biome data and game logic
+* PNG export behavior remains unchanged
 
 ***
 

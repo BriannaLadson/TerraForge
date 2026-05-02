@@ -1,6 +1,6 @@
 """
 This is a demo for TerraForge.
-It generates a biome, elevation, moisture, and temperature map and saves them to the currency directory.
+It generates a biome, elevation, moisture, and temperature map and saves them to the current directory.
 """
 
 from terraforge import TerraForge
