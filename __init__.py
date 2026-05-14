@@ -5,6 +5,7 @@ from .dungeonforge import DungeonForge
 __all__ = [
 	"TerraForge",
 	"DungeonForge",
+	"TownForge",
 ]
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"

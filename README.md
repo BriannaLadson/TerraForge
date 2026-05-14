@@ -1,9 +1,9 @@
-# TerraForge v1.4.0 🗺️
-**Procedural Biome/Island & Dungeon Map Generator using Simplex Noise**
+# TerraForge v1.5.0 🗺️
+**Procedural Biome/Island, Town & Dungeon Map Generator using Simplex Noise**
 
 **TerraForge** is a versatile Python toolset for procedural map generation. 
 
-It includes tools for creating noise-based biome maps and multi-level dungeon layouts with fine-grained control over terrain shaping, biome placement, and dungeon structure.
+It includes tools for creating noise-based biome maps, procedural town layouts, and multi-level dungeon layouts...
 
 ***
 
@@ -25,6 +25,15 @@ It includes tools for creating noise-based biome maps and multi-level dungeon la
 - Optional PNG export per dungeon level
 - Tile color customization for export
 - JSON preset import/export
+
+## 🏘️ Town Generator (TownForge)
+- Procedural town generation
+- Configurable building types and quantities
+- Randomized building sizes and placement
+- Overlap prevention with configurable spacing
+- Randomized door placement
+- PNG export support
+- Deterministic generation using seeds
 
 ***
 
@@ -64,7 +73,27 @@ Console based demo with movement.
 python dungeon_demo1.py
 ```
 
-Generates .pngs for each dungeon level. 
+Generates .pngs for each dungeon level.
+
+### Town Map Generator
+```
+from townforge import TownForge
+
+generator = TownForge(
+	map_size = 300,
+	building_padding = 4,
+	seed = None,
+	image_size = None,
+)
+
+town_map = generator.generate()
+
+generator.export_town_map_image(
+	output_dir="."
+)
+```
+
+This generates a procedural town map and exports it as a PNG image.
 
 ***
 
@@ -152,6 +181,17 @@ generator.generate()
 ```
 
 ***
+
+## 🚀 Usage - TownForge (Towns)
+`from townforge import TownForge`
+
+`generator = TownForge()`
+
+`town_map = generator.generate()`
+
+`generator.export_town_map_image()`
+
+***
 ## ⚙️ Customization Options
 
 ### Biome Generator
@@ -173,6 +213,17 @@ Edit the values in terraforge.py or the demo to control:
 - Maximum rooms and room size constraints
 - Tile symbols and export colors
 - Specify which levels to export (levels=[0, 2])
+
+### Town Generator
+- Map size
+- Image size
+- Building spacing/padding
+- Building types
+- Building quantities
+- Building sizes
+- Building colors
+- Random seeds
+
 ***
 ## Related Tools
 ### [TerraForge Studio](https://github.com/BriannaLadson/TerraForge/releases/tag/v0.1.0)
