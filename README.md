@@ -1,4 +1,4 @@
-# TerraForge v1.5.0 🗺️
+# TerraForge v1.6.0 🗺️
 **Procedural Biome/Island, Town & Dungeon Map Generator using Simplex Noise**
 
 **TerraForge** is a versatile Python toolset for procedural map generation. 
@@ -31,9 +31,14 @@ It includes tools for creating noise-based biome maps, procedural town layouts, 
 - Configurable building types and quantities
 - Randomized building sizes and placement
 - Overlap prevention with configurable spacing
+- Configurable edge padding
 - Randomized door placement
+- Configurable door sides and inset spacing
+- Building metadata access helpers
+- Optional building label rendering
 - PNG export support
 - Deterministic generation using seeds
+
 
 ***
 
@@ -80,16 +85,20 @@ Generates .pngs for each dungeon level.
 from townforge import TownForge
 
 generator = TownForge(
-	map_size = 300,
-	building_padding = 4,
-	seed = None,
-	image_size = None,
+	map_size=300,
+	image_size=None,
+	seed=None,
+	building_padding=4,
+	map_edge_padding=5,
+	door_inset=1,
+	door_sides=("north", "south", "east", "west"),
 )
 
 town_map = generator.generate()
 
 generator.export_town_map_image(
-	output_dir="."
+	output_dir=".",
+	show_building_names=False,
 )
 ```
 
@@ -191,6 +200,20 @@ generator.generate()
 
 `generator.export_town_map_image()`
 
+## 🧠 Accessing Building Data
+```
+building = generator.get_building_at(x, y)
+
+print(building["name"])
+print(building["type"])
+```
+
+You can also retrieve buildings by their door tile:
+
+```
+building = generator.get_building_by_door(x, y)
+```
+
 ***
 ## ⚙️ Customization Options
 
@@ -218,10 +241,17 @@ Edit the values in terraforge.py or the demo to control:
 - Map size
 - Image size
 - Building spacing/padding
+- Map edge padding
+- Door placement rules
+- Door inset spacing
 - Building types
 - Building quantities
 - Building sizes
 - Building colors
+- Ground color
+- Door color
+- Outline color
+- Building label rendering
 - Random seeds
 
 ***

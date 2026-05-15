@@ -14,6 +14,13 @@ class TownForge:
 		seed=None,
 		image_size=None,
 		building_padding=4,
+		ground_color="#3E7C3C",
+		door_color="#FFD700",
+		outline_color="black",
+		max_failures_multiplier=20,
+		door_sides=("north", "south", "east", "west"),
+		map_edge_padding=5,
+		door_inset=1,
 	):
 		# Building Types
 		if building_types is not None:
@@ -96,6 +103,20 @@ class TownForge:
 			
 		self.building_padding = building_padding
 		
+		self.ground_color = ground_color
+		
+		self.door_color = door_color
+		
+		self.outline_color = outline_color
+		
+		self.max_failures_multiplier = max_failures_multiplier
+		
+		self.door_sides = door_sides
+		
+		self.map_edge_padding = map_edge_padding
+		
+		self.door_inset = door_inset
+		
 	def generate(self):
 		self.buildings = []
 		
@@ -118,7 +139,7 @@ class TownForge:
 			
 			placed = 0
 			failures = 0
-			max_failures = quantity * 20
+			max_failures = quantity * self.max_failures_multiplier
 			
 			while placed < quantity and failures < max_failures:
 				success = self.place_building(building_type_id, building_type, placed)
@@ -135,8 +156,8 @@ class TownForge:
 		width = self.rng.randint(min_size, max_size)
 		height = self.rng.randint(min_size, max_size)
 		
-		x = self.rng.randint(0, self.map_size - width - 1)
-		y = self.rng.randint(0, self.map_size - height - 1)
+		x = self.rng.randint(self.map_edge_padding, self.map_size - width - self.map_edge_padding)
+		y = self.rng.randint(self.map_edge_padding, self.map_size - height - self.map_edge_padding)
 		
 		building = {
 			"id": f"{building_type_id}_{index}",
@@ -195,21 +216,22 @@ class TownForge:
 		width = building["width"]
 		height = building["height"]
 		
-		side = self.rng.choice(["north", "south", "east", "west"])
+		side = self.rng.choice(self.door_sides)
+		inset = self.door_inset
 		
 		if side == "north":
-			return self.rng.randint(x, x + width - 1), y
+			return self.rng.randint(x + inset, x + width - 1 - inset), y
 			
 		elif side == "south":
-			return self.rng.randint(x, x + width - 1), y + height - 1
+			return self.rng.randint(x + inset, x + width - 1 - inset), y + height - 1
 			
 		elif side == "east":
-			return x + width - 1, self.rng.randint(y, y + height - 1)
+			return x + width - 1, self.rng.randint(y + inset, y + height - 1 - inset)
 			
 		else:
-			return x, self.rng.randint(y, y + height - 1)
+			return x, self.rng.randint(y + inset, y + height - 1 - inset)
 		
-	def export_town_map_image(self, output_dir="."):
+	def export_town_map_image(self, output_dir=".", show_building_names=False, building_name_color="white"):
 		if not hasattr(self, "town_map"):
 			raise ValueError("Town map has not been generated yet. Call generate() first.")
 			
@@ -222,7 +244,7 @@ class TownForge:
 		#Draw Ground
 		draw.rectangle(
 			[0, 0, self.image_size[0], self.image_size[1]],
-			fill="#3E7C3C"
+			fill=self.ground_color
 		)
 		
 		#Draw Buildings
@@ -236,7 +258,7 @@ class TownForge:
 			draw.rectangle(
 				[x0, y0, x1, y1],
 				fill=building["color"],
-				outline="black"
+				outline=self.outline_color
 			)
 				
 			#Draw Doors
@@ -250,10 +272,38 @@ class TownForge:
 			
 			draw.rectangle(
 				[dx0, dy0, dx1, dy1],
-				fill="#FFD700"
+				fill=self.door_color
 			)
 			
+			if show_building_names:
+				cx = (x0 + x1) // 2
+				cy = (y0 + y1) // 2
+				
+				draw.text(
+					(cx, cy),
+					building["name"],
+					fill=building_name_color,
+					anchor="mm"
+				)
+			
 		img.save(f"{output_dir}/town_map.png")
+		
+	def get_building_at(self, x, y):
+		for building in self.buildings:
+			if (
+				building["x"] <= x < building["x"] + building["width"] and
+				building["y"] <= y < building["y"] + building["height"]
+			):
+				return building
+				
+		return None
+		
+	def get_building_by_door(self, x, y):
+		for building in self.buildings:
+			if building["door"] == (x, y):
+				return building
+				
+		return None
 		
 # For Testing Remove Later!
 if __name__ == "__main__":
@@ -261,4 +311,4 @@ if __name__ == "__main__":
 	
 	generator.generate()
 	
-	generator.export_town_map_image()
+	generator.export_town_map_image(show_building_names=True)
