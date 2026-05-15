@@ -304,11 +304,3 @@ class TownForge:
 				return building
 				
 		return None
-		
-# For Testing Remove Later!
-if __name__ == "__main__":
-	generator = TownForge()
-	
-	generator.generate()
-	
-	generator.export_town_map_image(show_building_names=True)
