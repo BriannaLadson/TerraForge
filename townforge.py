@@ -131,7 +131,13 @@ class TownForge:
 		return self.town_map
 		
 	def place_buildings(self):
-		for building_type_id, building_type in self.building_types.items():
+		sorted_building_types = sorted(
+			self.building_types.items(),
+			key=lambda item: item[1].get("priority", 0),
+			reverse=True,
+		)
+		
+		for building_type_id, building_type in sorted_building_types:
 			quantity = self.rng.randint(
 				building_type["min_quantity"],
 				building_type["max_quantity"]
