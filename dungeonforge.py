@@ -26,6 +26,7 @@ class DungeonForge:
 		self.max_room_size = room_size[1]
 		self.max_rooms = max_rooms
 		self.rooms = []
+		self.entrance = None
 		
 		if level_size is None or level_size <=0:
 			level_size = 25
@@ -142,6 +143,26 @@ class DungeonForge:
 		level[y1:y2+1, x] = self.FLOOR
 			
 	def place_stairs(self):
+		self.entrance = None
+		
+		if not self.dungeon_map:
+			return
+			
+		first_level = self.dungeon_map[0]
+		ys, xs = np.where(first_level == self.FLOOR)
+		
+		if len(xs) == 0:
+			raise RuntimeError("No floor tiles to place the dungeon entrance.")
+			
+		idx = self.rng.randrange(len(xs))
+		entrance_y = int(ys[idx])
+		entrance_x = int(xs[idx])
+		
+		first_level[entrance_y, entrance_x] = self.UP
+		self.entrance = (entrance_x, entrance_y)
+		
+		self.ensure_accessible(first_level, entrance_y, entrance_x)
+		
 		for z in range(self.z_levels - 1):
 			level_a = self.dungeon_map[z]
 			level_b = self.dungeon_map[z + 1]
@@ -197,18 +218,6 @@ class DungeonForge:
 				
 		self.dig_h_corridor(level, x, tx, y)
 		self.dig_v_corridor(level, y, ty, tx)
-				
-	def connect_isolated_tile(self, level, start_pos):
-		for y in range(self.level_size):
-			for x in range(self.level_size):
-				if level[y, x] == self.FLOOR and (x, y) != start_pos:
-					path = self.get_cooridor_path(start_pos, (x, y))
-					if path:
-						for px, py in path:
-							if 0 <= px < self.level_size and 0 <= py < self.level_size:
-								if level[py, px] == self.WALL:
-									level[py, px] = self.FLOOR
-						return 
 						
 	def export_preset(self, path: str):
 		"""Save this DungeonForge configuration as a JSON preset."""
@@ -253,6 +262,7 @@ class DungeonForge:
 		
 		# Clear generated state
 		self.rooms = []
+		self.entrance = None
 		if hasattr(self, "dungeon_map"):
 			delattr(self, "dungeon_map")
 
